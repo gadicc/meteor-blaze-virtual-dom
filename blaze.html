@@ -1,0 +1,21 @@
+<head>
+  <title>blaze</title>
+</head>
+
+<body>
+  <h1>Welcome to Meteor!</h1>
+
+  {{> hello}}
+</body>
+
+<template name="hello">
+  <button id="counterBtn">Click Me</button>
+  <p>You've pressed the button {{counter}} times.</p>
+  <ul>
+    {{#each items}}
+      <li>{{name}}</li>
+    {{/each}}
+  </ul>
+  <input type="text" id="addItem">
+  <button id="addItemBtn">Insert</button>
+</template>
