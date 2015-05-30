@@ -28,6 +28,13 @@ Obviously with deeper work into Blaze we could get even better results.
 1. A renderer can process the queue (using a map from vdom<->dom),
    and with a max time limit for a single run.
 
+This really is just a proof-of-concept.  Very limited scenarios were tested.  Need to
+consider:
+
+* DOM manipulation e.g. by a jQuery plugin -- probably will work
+* But, lifecycle callbacks would need to map to the real DOM
+* Probably a lot of other things :>
+
 **Possible Improvements**
 
 1. Optimization.  We just go through the queue, even if some entries have become
@@ -37,4 +44,3 @@ Obviously with deeper work into Blaze we could get even better results.
    separation in Blaze of what *has to* run in main thread.
 1. Potentially a lot of Meteor could be made to optionally run in a web worker
    (as a long term project :))
-   
