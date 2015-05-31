@@ -1,12 +1,8 @@
 document = Blaze._vdom = function() {};
-var vdomMapLocal = {};  // only used for event hack
 var queue = Blaze._queue = [];
 
-document.createDocumentFragment = function() {
-  var node = new vNode();
-  node.nodeType = vNode.DOCUMENT_FRAGMENT_NODE;
-  return node;
-}
+// Used for event hack, and for Blaze.render when used by user, not internally.
+var vdomMapLocal = Blaze._vdomMapLocal = {};
 
 var vNode = function() {
   this.nodeType = vNode.ELEMENT_NODE;
@@ -15,7 +11,16 @@ var vNode = function() {
   this.ownerDocument = document;
   this.attributes = {};  // meant to be a NamedNodeMap
 
+  // Not handled, could be done with getter/setter and/or custom method
+  this.style = {};
+  this.classList = {
+    add: function() {}
+  }
+
   this.vdomId = Random.id();
+
+  // only used for event hack
+  vdomMapLocal[this.vdomId] = this;
 };
 
 vNode.ELEMENT_NODE = 1;
@@ -34,7 +39,9 @@ vNode.NOTATION_NODE = 12;
 // https://developer.mozilla.org/en-US/docs/Web/API/Node/appendChild
 vNode.prototype.appendChild = function(child) {
   if (child instanceof Node) {
-    console.warn('appendChild on ', vNode, ' given real (non-virtual) node: ', child);
+    console.warn('appendChild on ', this.tagName, this.vdomId, ' given real (non-virtual) node: ', child);
+    // child = realToVirt(child);
+    // console.log(child);
   }
 
   child.parentNode = child.parentElement = this;
@@ -51,7 +58,6 @@ vNode.prototype.appendChild = function(child) {
     this.children.push(child);
 
 //  console.log('appendChild', this.vdomId, child.vdomId, this, child);
-  vdomMapLocal[child.vdomId] = child;  // only used for event hack
   queue.push(['appendChild', this.vdomId, child.vdomId]);
   return child;
 }
@@ -76,7 +82,6 @@ vNode.prototype.insertBefore = function(newElement, referenceElement) {
 
   newElement.parentNode = newElement.parentElement = this;
 
-  vdomMapLocal[newElement.vdomId] = newElement;  // only used for event hack
   queue.push(['insertBefore', this.vdomId, newElement.vdomId, referenceElement.vdomId]);
   return newElement;
 }
@@ -100,6 +105,10 @@ https://developer.mozilla.org/en-US/docs/Web/API/Element/setAttribute
 vNode.prototype.setAttribute = function(name, value) {
   this.attributes[name] = value;
   queue.push(['setAttribute', this.vdomId, name, value]);
+}
+
+vNode.prototype.getAttribute = function(name) {
+  return this.attributes[name];
 }
 
 var vText = function() {
@@ -126,7 +135,15 @@ document.createElement = function(tagName) {
   return node;
 }
 
+document.createDocumentFragment = function() {
+  var node = new vNode();
+  node.nodeType = vNode.DOCUMENT_FRAGMENT_NODE;
+  return node;
+}
+
+document.documentElement = document.createElement('HTML');
 document.body = document.createElement('BODY');
+document.documentElement.appendChild(document.body);
 
 jQuery = function(node) {
   return {
@@ -149,7 +166,7 @@ jQuery.parseHTML = function(data) {
 }
 
 // need a real parser to put this in a web worker
-function realToVirt(el) {
+realToVirt = function(el) {
   var node;
   if (el.nodeType === Node.TEXT_NODE)
     node = document.createTextNode(el.textContent);
@@ -157,6 +174,7 @@ function realToVirt(el) {
     node = document.createElement(el.tagName);
   else
     throw new Error("Unkown node type " + el.nodeType, el);
+//  el.vdomId = node.vdomId;
 
   _.each(el.attributes, function(attr) {
     node.setAttribute(attr.nodeName, attr.nodeValue);

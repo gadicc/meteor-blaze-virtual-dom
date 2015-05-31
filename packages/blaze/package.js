@@ -37,6 +37,8 @@ Package.onUse(function (api) {
     'template.js',
     'backcompat.js'
   ]);
+
+  api.addFiles('virtual-dom-post.js', 'client');
 });
 
 Package.onTest(function (api) {
