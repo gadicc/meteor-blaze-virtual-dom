@@ -29,7 +29,8 @@ Obviously with deeper work into Blaze we could get even better results.
    and the below in the main thread (with access to the real DOM).  (Not
    implemented, but possible with this design).
 1. A renderer can process the queue (using a map from vdom<->dom),
-   and with a max time limit for a single run.
+   and with a max time limit for a single run, e.g. on `requestAnimationFrame`,
+   with a max time of less than 16.67ms.
 
 This really is just a proof-of-concept.  Very limited scenarios were tested.  Need to
 consider:
@@ -46,6 +47,8 @@ consider:
    superfluous.  A lot of work though.  We could also try consider minimal
    changes necessary like react does (rather than the current complete rerender
    of albeit smaller parts).
+1. DOM element recycling.  On removeElement, keep a reference to the DOM node,
+   kept in a pool, and used as first choice for insertElement.
 1. Event management here is just a hack, could be done properly with a clearer
    separation in Blaze of what *has to* run in main thread (not to force anything
    on the user, but to make the option available).
